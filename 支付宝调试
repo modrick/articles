@@ -1,0 +1,49 @@
+前一段时间调试了支付宝的接口，把经验和坑总结一下
+
+其实没什么 就是几个步骤
+1. 申请各种支付产品
+2. 生成自己的秘钥  上传自己的公钥  下载支付宝的公钥
+3. 验证网关
+    验证支付宝签名时不能删除sign_type字段
+4. 手机网站支付  当面付   APP支付 用的是同一套秘钥
+     这点网站上写的不明白
+5. 调用接口支付 
+    在return_url 和 notify_url对支付宝的回调进行验签
+    这个时候的验签要删除sign_type字段
+    不知道为什么这么设计
+
+坑总结一下    
+
+1.验签
+  提交APP网关时候验签不能删除sign_type字段
+  delete postData['sign']
+      if (type) {
+        delete postData['sign_type']
+      }
+  对于支付的回调验签必须删除sign_type字段
+  对于这种实现方式个人觉得完全没有必要 不知道是粗心还是故意为之
+
+2.签名和验签都必须对字段进行排序, 去掉空格 组成纯字符串然后再进行处理
+
+3.手机网站支付  
+  在支付宝的说明文档中是使用的是mapi的网关，实际上使用的确实openapi，秘钥也是使用的是openapi中的秘钥
+  有待新版本做更改或者说明
+
+4.支付宝要求使用的字段不能为空串如：url='' 结果都会报错，而且错误信息无法理解
+
+5.扫码支付和手机网站支付的请求方式不同
+  扫码--post
+  手机网站支付—get
+
+6.支付宝通知 post和get
+  notify_url: config['notifyUrl'],
+  return_url: config['returnUrl'],
+  post https://dyb.xxx.com/sqbpay/alipay/notify
+  get   https://dyb.xxx.com/sqbpay/alipay/return
+
+7.正式环境网关 不能混
+    this._config['gatewayUrl'] = 'https://openapi.alipay.com/gateway.do'
+  开发网关
+    this._config['gatewayUrl'] = 'https://openapi.alipaydev.com/gateway.do'
+
+8.支付宝的文档还在更新完善中，以文档为准

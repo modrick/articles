@@ -1,0 +1,25 @@
+对于node程序员promise是必修课，两个"理所应当"的问题，缺容易困扰你
+
+1.同步延时
+2.异步下载
+
+
+var fs = require('fs')
+var request = require('request')
+var Promise = require('bluebird')
+var request = Promise.promisifyAll(require('request'))
+
+  delay (ms) {
+    return new Promise(function (resolve, reject) {
+      setTimeout(resolve, ms)
+    })
+  }
+
+  * download (url, fileName1, fileName2) {
+    var output = fs.createWriteStream(fileName2)
+    return yield new promise(function (resolve, reject) {
+      request(url).pipe(output).on('close', function () {
+        resolve(1)
+      })
+    })
+  }
